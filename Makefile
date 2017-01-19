@@ -8,6 +8,9 @@ LIBS = -L$(OBDIR)/lib
 all: main
 
 main: src/main_ob.cpp
-	$(CXX) $(INCLUDE) $(LIBS) src/main_ob.cpp -o main -lopenbabel
+	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/main_ob.cpp -o main -lopenbabel
+
+clean:
+	rm -f main
 
 
