@@ -38,7 +38,7 @@ OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 
     return rotated;
 }
 
-void minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
+double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
     OpenBabel::OBStopwatch timer;
     timer.Start();
@@ -46,9 +46,6 @@ void minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
     pFF->Setup(mol);
 
     double e = pFF->Energy();
-
-    printf("Initial energy of molecule: %10.3f kJ/mol\n", e);
-    printf("Minimizing ....");
 
     const int steps = 200;
     const double crit = 5.0e-4;
@@ -75,9 +72,10 @@ void minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
     }
     e = pFF->Energy();
+
     double time_elapsed = timer.Elapsed();
-    printf(" %5.2f seconds\n", time_elapsed);
-    printf("Minimzed energy of molecule: %10.3f kJ/mol\n", e);
+
+    return e;
 
 }
 
@@ -90,13 +88,18 @@ int main(int argc, char *argv[]) {
 
     printf("Running McDock 0.1 alpha\n");
 
-    if (argc < 3) {
-        printf("Not enough CLI arguments!\n");
+    if (argc < 5) {
+        printf("\nUsage: ./mcdock file1.xyz file2.xyz STEPS TAU\n\n");
+        printf("STEPS  = Number of MC steps\n");
+        printf("TAU    = Temperature in units of [kB T]\n\n");
         return 1;
     }
 
     std::string base_file = argv[1];
     std::string dock_file = argv[2];
+
+    const int nsteps = atoi(argv[3]);
+    const double tau = atoi(argv[4]);
 
     OpenBabel::OBMol mol;
     OpenBabel::OBMol mol2;
@@ -113,8 +116,13 @@ int main(int argc, char *argv[]) {
     conv.Read(&mol2, &ifs);
     ifs.close();
 
-    minimize_molecule(mol, ff);
-    minimize_molecule(mol2, ff);
+    double ea = minimize_molecule(mol, ff);
+    printf("Molecule A (minimized) E = %10.4f kJ/mol    file = ", ea);
+    std::cout << base_file << std::endl;
+
+    double eb = minimize_molecule(mol2, ff);
+    printf("Molecule B (minimized) E = %10.4f kJ/mol    file = ", eb);
+    std::cout << dock_file << std::endl;
 
     std::remove("out.xyz");
     std::ofstream ofs("out.xyz");
@@ -127,14 +135,13 @@ int main(int argc, char *argv[]) {
     conv.Write(&mol, &ofs);
 
     double e = pFF->Energy();
-    printf("Initial energy of complex: %10.3f kJ/mol\n", e);
+    printf("Initial binding energy of complex: %10.3f kJ/mol\n", e - (ea - eb));
 
     double energy_old = e;
     double delta_e = 0.0;
 
     OpenBabel::OBMol mol_old = mol;
     mol_old.SetCoordinates(mol.GetCoordinates());
-
 
     std::default_random_engine generator;
     std::uniform_real_distribution<double> random_length(0.0, 0.25);
@@ -149,8 +156,9 @@ int main(int argc, char *argv[]) {
     OpenBabel::vector3 temp;
     double t;
 
-    double tau = 0.1;
-    for (unsigned int step = 0; step < 5000; step++) {
+    // double tau = 0.1;
+
+    for (unsigned int step = 0; step < nsteps; step++) {
 
         // Translation move
         move.randomUnitVector();
@@ -196,23 +204,30 @@ int main(int argc, char *argv[]) {
 
         delta_e =  e - energy_old;
 
-            if (std::exp( - delta_e / tau) >= uniform1(generator)) {
+        if (std::exp( - delta_e / tau) >= uniform1(generator)) {
 
             mol_old.SetCoordinates(mol.GetCoordinates());
             energy_old = e;
-            std::cout << step << "  " << e << "    accept    " <<  std::exp( - delta_e / tau) << "    " << delta_e << std::endl;
+
+            printf("Step: %10u  E_bind = %10.4f kJ/mol\n", step, e - (ea - eb));
+
             conv.Write(&mol, &ofs);
 
         } else {
             mol.SetCoordinates(mol_old.GetCoordinates());
             e = energy_old;
-            // std::cout << step << "  " << e << "    reject" << std::endl;
         }
     }
    
+
+    printf("Minimizing final conformation ... ");
     conv.Write(&mol, &ofs);
-    minimize_molecule(mol, ff);
+
+    double ec = minimize_molecule(mol, ff);
     ofs.close();
+    printf("done!\n");
+    printf("Wrote out.xyz\n");
+    printf("Final E_bind = %10.4f kJ/mol\n", ec - (ea - eb));
 
     return 0;
 
