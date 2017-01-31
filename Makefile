@@ -7,13 +7,19 @@ LIBS = -L$(OBDIR)/lib
 
 all: mcdock
 
-mcdock: src/main_ob.cpp
-	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/main_ob.cpp -o mcdock -lopenbabel
+mcdock: src/mcdock.cpp
+	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/mcdock.cpp -o mcdock -lopenbabel -Wall
+
+main: src/main_ob.cpp
+	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/main_ob.cpp -o main -lopenbabel
 
 conformers: src/conformers.cpp
 	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/conformers.cpp -o conformers -lopenbabel
 
+
 clean:
 	rm -f main
+	rm -f mcdock
+	rm -f conformers
 
 

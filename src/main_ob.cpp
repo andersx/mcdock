@@ -28,9 +28,14 @@ OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 
     double v = J.y();
     double w = J.z();
 
-    double a = (u*(u*x + v*y + w*z) + (x * (v*v + w*w) - u *(v*y + w*z)) * std::cos(T) + std::sqrt(u*u + v*v + w*w) * (-w*y + v*z) * std::sin(T)) / (u*u + v*v + w*w);
-    double b = (v*(u*x + v*y + w*z) + (y * (u*u + w*w) - v *(u*x + w*z)) * std::cos(T) + std::sqrt(u*u + v*v + w*w) * ( w*x - u*z) * std::sin(T)) / (u*u + v*v + w*w);
-    double c = (w*(u*x + v*y + w*z) + (z * (u*u + v*v) - w *(u*x + v*y)) * std::cos(T) + std::sqrt(u*u + v*v + w*w) * (-v*x + u*y) * std::sin(T)) / (u*u + v*v + w*w);
+    double norm = std::sqrt(u*u + v*v + w*w);
+    double inv_norm_sqrt = 1.0 / (norm * norm);
+    double sint = std::sin(T);
+    double cost = std::cos(T);
+
+    double a = (u * (u*x + v*y + w*z) + (x * (v*v + w*w) - u * (v*y + w*z)) * cost + norm * (-w*y + v*z) * sint) * inv_norm_sqrt;
+    double b = (v * (u*x + v*y + w*z) + (y * (u*u + w*w) - v * (u*x + w*z)) * cost + norm * ( w*x - u*z) * sint) * inv_norm_sqrt;
+    double c = (w * (u*x + v*y + w*z) + (z * (u*u + v*v) - w * (u*x + v*y)) * cost + norm * (-v*x + u*y) * sint) * inv_norm_sqrt;
 
     OpenBabel::vector3 rotated;
     rotated.Set(a, b, c);
