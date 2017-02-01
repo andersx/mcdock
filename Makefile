@@ -7,7 +7,7 @@ LIBS = -L$(OBDIR)/lib
 
 all: mcdock
 
-mcdock: src/mcdock.cpp
+mcdock: src/mcdock.cpp src/utils.hpp
 	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/mcdock.cpp -o mcdock -lopenbabel -Wall
 
 main: src/main_ob.cpp

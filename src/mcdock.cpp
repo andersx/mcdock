@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-// #include <cmath>
 #include <string.h>
 #include <fstream>
 #include <sstream>
@@ -19,57 +18,18 @@
 
 #include "utils.hpp"
 
-std::string ff = "MMFF94";
-
-void set_conformations(OpenBabel::OBMol &mol){
-
-    OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
-    pFF->Setup(mol);
-
-    double rmsd_cutoff = 0.5;
-    double energy_cutoff = 50.0;
-    unsigned int conf_cutoff = 1000000; // 1 Million
-    bool verbose = false;
-
-    pFF->DiverseConfGen(rmsd_cutoff, conf_cutoff, energy_cutoff, verbose);
-    pFF->GetConformers(mol);
-
-
-}
-
-
-OpenBabel::vector3 get_com(OpenBabel::OBMol mol) {
-
-    OpenBabel::vector3 com;
-    com.Set(0.0, 0.0, 0.0);
-    OpenBabel::OBAtom *atom;
-
-    OpenBabel::vector3 temp;
-    for (unsigned int i = 1; i < mol.NumAtoms() + 1; i++) {
-
-        atom = mol.GetAtom(i);
-        temp = atom->GetVector();
-        com += temp;
-    }
-    
-    com /= mol.NumAtoms();
-
-    return com;
-
-}
-
-
 int main(int argc, char *argv[]) {
 
-    // OpenBabel::OBPlugin::List("forcefields", "verbose");
-    // std::string ff = "UFF";
+    OpenBabel::OBStopwatch timer;
+    timer.Start();
 
     printf("Running McDock 0.2 alpha\n");
 
     if (argc < 5) {
-        printf("\nUsage: ./mcdock file1.xyz file2.xyz STEPS TAU\n\n");
+        printf("\nUsage: ./mcdock file1.xyz file2.xyz STEPS TAU NMC\n\n");
         printf("STEPS  = Number of MC steps\n");
-        printf("TAU    = Temperature in units of [kB T]\n\n");
+        printf("TAU    = Temperature in units of [kB T]\n");
+        printf("NMC    = Number of MC trajectories for each conformation \n\n");
         return 1;
     }
 
@@ -79,7 +39,7 @@ int main(int argc, char *argv[]) {
     const int nsteps = atoi(argv[3]);
     const double tau = atoi(argv[4]);
     
-    const unsigned int starting_points = 20;
+    const unsigned int starting_points = atoi(argv[5]);
 
     // Get OBMols
     OpenBabel::OBMol mol;
@@ -97,9 +57,9 @@ int main(int argc, char *argv[]) {
     conv.Read(&ligand, &ifs);
     ifs.close();
 
-    // Gent energies of monomers Mol1 and Mol2
+    // Gent energies of pocket molecule
     double ea = minimize_molecule(mol, ff);
-    printf("Pocket (minimized) E = %10.4f kJ/mol    file = ", ea);
+    printf("Pocket (minimized) E = %10.4f kcal/mol    file = ", ea / 4.184);
     std::cout << base_file << std::endl;
 
     OpenBabel::vector3 com = get_com(mol);
@@ -111,37 +71,33 @@ int main(int argc, char *argv[]) {
 
     // Center pocket
     for (unsigned int i = 1; i < mol.NumAtoms() + 1; i++) {
-
        atom = mol.GetAtom(i);
        temp = atom->GetVector();
        temp -= com;
        atom->SetVector(temp);
-
     }
-
-    // double eb = minimize_molecule(ligand, ff);
-    // printf("Ligand (minimized) E = %10.4f kJ/mol    file = ", eb);
-    // std::cout << dock_file << std::endl;
-
+    
+    // Do rotor search for ligand molecule
     printf("Performing rotor search for ligand molecule\n");
     set_conformations(ligand);
     printf("Found %3i rotatable bonds\n", ligand.NumRotors());
 
 
+    // Make sure output file doesn't already exist.
     std::remove("out.xyz");
     std::ofstream ofs("out.xyz");
   
+    // Initialize random number generators
     std::default_random_engine generator;
     std::uniform_real_distribution<double> random_length(0.0, 0.25);
     std::uniform_real_distribution<double> random_angle(0.0, 90.0/180.0*M_PI);
-
     std::uniform_real_distribution<double> uniform1(0.0, 1.0);
-
 
     double theta;
     double eb;  
 
     double e_low = std::numeric_limits<double>::infinity();
+    double eb_min = std::numeric_limits<double>::infinity();
 
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
 
@@ -149,7 +105,17 @@ int main(int argc, char *argv[]) {
 
         ligand.SetConformer(c);
         eb = minimize_molecule(ligand, ff);
-        printf("Rotamer %4i     E = %10.4f kJ/mol\n", c, eb);
+        if (eb < eb_min) eb_min = eb;
+        printf("Rotamer %4i     E = %10.4f kcal/mol\n", c, eb / 4.184);
+    }
+    
+    printf("Lowest energy conformation  E = %10.4f kcal/mol\n", eb_min / 4.184);
+
+    for (int c = 0; c < ligand.NumConformers(); ++c) {
+
+        ligand.SetConformer(c);
+        eb = minimize_molecule(ligand, ff);
+        // printf("Rotamer %4i     E = %10.4f kJ/mol\n", c, eb);
 
         for (unsigned int n = 0; n < starting_points; n++) {
 
@@ -169,21 +135,18 @@ int main(int argc, char *argv[]) {
                 atom->SetVector(temp);
 
             }
-            
+           
+            // Make object to roll-back rejected MC moves 
             OpenBabel::OBMol mol_ligand = mol;
             mol_ligand += ligand;
             OpenBabel::OBMol mol_old = mol_ligand;
-
             mol_old.SetCoordinates(mol_ligand.GetCoordinates());
 
+            // Initialize MC energy
             pFF->Setup(mol_ligand);
             double e = pFF->Energy();
-            // printf("Starting conformation %4i Initial binding energy of complex: %10.3f kJ/mol\n", n, e - (ea + eb));
-
             double energy_old = e;
             double delta_e = 0.0;
-
-            // conv.Write(&mol_ligand, &ofs);
 
             // Begin MC simulation
             for (int step = 0; step < nsteps; step++) {
@@ -227,20 +190,17 @@ int main(int argc, char *argv[]) {
                     atom->SetVector(temp);
                 }
 
+                // Evaluate total energy
                 pFF->SetCoordinates(mol_ligand);
                 e = pFF->Energy();
-
                 delta_e =  e - energy_old;
 
+                // Metropolis-Hastings MC criterion, accept ...
                 if (std::exp( - delta_e / tau) >= uniform1(generator)) {
-
                     mol_old.SetCoordinates(mol_ligand.GetCoordinates());
                     energy_old = e;
-
-                    // printf("Step: %10u  E_bind = %10.4f kJ/mol\n", step, e - (ea + eb));
-
-                    // conv.Write(&mol_ligand, &ofs);
-
+                    // printf(" Etot = %10.4f    Ea = %10.4f Eb = %10.4f   E_bind = %10.4f\n", e, ea, eb_min, e - (ea + eb_min));
+                // ... or reject.
                 } else {
                     mol_ligand.SetCoordinates(mol_old.GetCoordinates());
                     e = energy_old;
@@ -248,9 +208,11 @@ int main(int argc, char *argv[]) {
             }
 
             double ec = minimize_molecule(mol_ligand, ff);
-            double e_bind = ec - (ea + eb);
-            printf("Final E_bind = %10.4f kJ/mol", e_bind);
+            double e_bind = ec - (ea + eb_min);
+
+            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, e_bind / 4.184);
             conv.Write(&mol_ligand, &ofs);
+
             if (e_bind < e_low) {
 
                 OpenBabel::OBConversion conv2;
@@ -265,11 +227,11 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("\n");
             }
-
         }
-
-        // conv.Write(&ligand, &ofs);
     }
+    double time_elapsed = timer.Elapsed();
+    printf("Optimized E_bind = %10.4f kcal/mol    Elapsed time = %4.2f seconds\n", 
+            e_low / 4.184, time_elapsed);
 
 
     ofs.close();

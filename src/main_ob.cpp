@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     conv.Write(&mol, &ofs);
 
     double e = pFF->Energy();
-    printf("Initial binding energy of complex: %10.3f kJ/mol\n", e - (ea - eb));
+    printf("Initial binding energy of complex: %10.3f kJ/mol\n", e - (ea + eb));
 
     double energy_old = e;
     double delta_e = 0.0;
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
             mol_old.SetCoordinates(mol.GetCoordinates());
             energy_old = e;
 
-            printf("Step: %10u  E_bind = %10.4f kJ/mol\n", step, e - (ea - eb));
+            printf("Step: %10u  E_bind = %10.4f kJ/mol\n", step, e - (ea + eb));
 
             conv.Write(&mol, &ofs);
 
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
     ofs.close();
     printf("done!\n");
     printf("Wrote out.xyz\n");
-    printf("Final E_bind = %10.4f kJ/mol\n", ec - (ea - eb));
+    printf("Final E_bind = %10.4f kJ/mol\n", ec - (ea + eb));
 
     return 0;
 

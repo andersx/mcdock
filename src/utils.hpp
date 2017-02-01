@@ -1,6 +1,7 @@
 #ifndef SRC_UTILS_HPP
 #define SRC_UTILS_HPP
 
+std::string ff = "MMFF94";
 
 // Returns a rotated vector, rotated by T
 OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 &J, const double T) {
@@ -29,12 +30,11 @@ OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 
 }
 double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
-    OpenBabel::OBStopwatch timer;
-    timer.Start();
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
     pFF->Setup(mol);
 
     double e = pFF->Energy();
+    // printf("E_before = %10.4f kJ/mol   %i\n", e, mol.NumAtoms());
 
     const int steps = 200;
     const double crit = 5.0e-4;
@@ -62,7 +62,45 @@ double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
     }
     e = pFF->Energy();
 
+    // printf("E_after = %10.4f kJ/mol %i\n", e, mol.NumAtoms());
     return e;
+
+}
+
+void set_conformations(OpenBabel::OBMol &mol){
+
+    OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
+    pFF->Setup(mol);
+
+    double rmsd_cutoff = 0.5;
+    double energy_cutoff = 50.0;
+    unsigned int conf_cutoff = 1000000; // 1 Million
+    bool verbose = false;
+
+    pFF->DiverseConfGen(rmsd_cutoff, conf_cutoff, energy_cutoff, verbose);
+    pFF->GetConformers(mol);
+
+
+}
+
+
+OpenBabel::vector3 get_com(OpenBabel::OBMol mol) {
+
+    OpenBabel::vector3 com;
+    com.Set(0.0, 0.0, 0.0);
+    OpenBabel::OBAtom *atom;
+
+    OpenBabel::vector3 temp;
+    for (unsigned int i = 1; i < mol.NumAtoms() + 1; i++) {
+
+        atom = mol.GetAtom(i);
+        temp = atom->GetVector();
+        com += temp;
+    }
+    
+    com /= mol.NumAtoms();
+
+    return com;
 
 }
 
