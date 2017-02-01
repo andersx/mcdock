@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     // Gent energies of pocket molecule
     double ea = minimize_molecule(mol, ff);
-    printf("Pocket (minimized) E = %10.4f kcal/mol    file = ", ea / 4.184);
+    printf("Pocket (minimized) E = %10.4f kcal/mol    file = ", ea);
     std::cout << base_file << std::endl;
 
     OpenBabel::vector3 com = get_com(mol);
@@ -105,10 +105,10 @@ int main(int argc, char *argv[]) {
         ligand.SetConformer(c);
         eb = minimize_molecule(ligand, ff);
         if (eb < eb_min) eb_min = eb;
-        printf("Rotamer %4i     E = %10.4f kcal/mol\n", c, eb / 4.184);
+        printf("Rotamer %4i     E = %10.4f kcal/mol\n", c, eb);
     }
     
-    printf("Lowest energy conformation  E = %10.4f kcal/mol\n", eb_min / 4.184);
+    printf("Lowest energy conformation  E = %10.4f kcal/mol\n", eb_min);
 
     for (int c = 0; c < ligand.NumConformers(); ++c) {
 
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
             double ec = minimize_molecule(mol_ligand, ff);
             double e_bind = ec - (ea + eb_min);
 
-            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, e_bind / 4.184);
+            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, e_bind);
             conv.Write(&mol_ligand, &ofs);
 
             if (e_bind < e_low) {
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
                 e_low = e_bind;
                 std::remove("min.xyz");
                 std::ofstream ofs_min("min.xyz");
-                std::string title = std::to_string(e_bind/4.180);
+                std::string title = std::to_string(e_bind);
                 mol_ligand.SetTitle(title);
                 conv2.Write(&mol_ligand, &ofs_min);
                 ofs_min.close();
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
     }
     double time_elapsed = timer.Elapsed();
     printf("Optimized E_bind = %10.4f kcal/mol    Elapsed time = %4.2f seconds\n", 
-            e_low / 4.184, time_elapsed);
+            e_low, time_elapsed);
 
 
     ofs.close();

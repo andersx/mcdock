@@ -22,8 +22,6 @@ void minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
     pFF->Setup(mol);
 
-    double e = pFF->Energy();
-
     const int steps = 50;
     const double crit = 5.0e-4;
 
@@ -48,7 +46,6 @@ void minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
         }
 
     }
-    e = pFF->Energy();
 
 }
 
@@ -90,15 +87,15 @@ int main(int argc, char *argv[]) {
     double energy_cutoff = 50.0;
     unsigned int conf_cutoff = 1000000; // 1 Million
     bool verbose = false;
-    bool include_original = true;
 
     pFF->DiverseConfGen(rmsd_cutoff, conf_cutoff, energy_cutoff, verbose);
     pFF->GetConformers(mol);
 
-    for (unsigned int c = 0; c < mol.NumConformers(); ++c) {
+    double e;
+    for (int c = 0; c < mol.NumConformers(); ++c) {
         mol.SetConformer(c);
         minimize_molecule(mol, ff);
-        double e = pFF->Energy();
+        e = pFF->Energy();
         printf("Rotamer %4i     E = %10.4f kJ/mol\n", c, e);
         conv.Write(&mol, &ofs);
     }

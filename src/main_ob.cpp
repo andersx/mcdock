@@ -45,8 +45,6 @@ OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 
 
 double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
-    OpenBabel::OBStopwatch timer;
-    timer.Start();
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
     pFF->Setup(mol);
 
@@ -77,8 +75,6 @@ double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
     }
     e = pFF->Energy();
-
-    double time_elapsed = timer.Elapsed();
 
     return e;
 
@@ -122,11 +118,11 @@ int main(int argc, char *argv[]) {
     ifs.close();
 
     double ea = minimize_molecule(mol, ff);
-    printf("Molecule A (minimized) E = %10.4f kcal/mol    file = ", ea / 4.180);
+    printf("Molecule A (minimized) E = %10.4f kcal/mol    file = ", ea);
     std::cout << base_file << std::endl;
 
     double eb = minimize_molecule(mol2, ff);
-    printf("Molecule B (minimized) E = %10.4f kcal/mol    file = ", eb / 4.180);
+    printf("Molecule B (minimized) E = %10.4f kcal/mol    file = ", eb);
     std::cout << dock_file << std::endl;
 
     std::remove("out.xyz");
@@ -163,7 +159,7 @@ int main(int argc, char *argv[]) {
 
     // double tau = 0.1;
 
-    for (unsigned int step = 0; step < nsteps; step++) {
+    for (int step = 0; step < nsteps; step++) {
 
         // Translation move
         move.randomUnitVector();
@@ -214,7 +210,7 @@ int main(int argc, char *argv[]) {
             mol_old.SetCoordinates(mol.GetCoordinates());
             energy_old = e;
 
-            printf("Step: %10u  E_bind = %10.4f kcal/mol\n", step, (e - (ea + eb)) / 4.180);
+            printf("Step: %10u  E_bind = %10.4f kcal/mol\n", step, (e - (ea + eb)));
 
             conv.Write(&mol, &ofs);
 
@@ -232,7 +228,7 @@ int main(int argc, char *argv[]) {
     ofs.close();
     printf("done!\n");
     printf("Wrote out.xyz\n");
-    printf("Final E_bind = %10.4f kcal/mol\n", (ec - (ea + eb))/4.180);
+    printf("Final E_bind = %10.4f kcal/mol\n", (ec - (ea + eb)));
 
     return 0;
 

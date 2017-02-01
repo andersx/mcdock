@@ -5,16 +5,19 @@ OBDIR = /home/andersx/opt/openbabel2.4
 INCLUDE = -I$(OBDIR)/include/openbabel-2.0/
 LIBS = -L$(OBDIR)/lib
 
+CXX_FLAGS = -std=c++11 -O3 -march=native -Wall
+LINKER_FLAGS = -lopenbabel
+
 all: mcdock main conformers
 
 mcdock: src/mcdock.cpp src/utils.hpp
-	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/mcdock.cpp -o mcdock -lopenbabel -Wall
+	$(CXX) $(INCLUDE) $(LIBS) $(CXX_FLAGS) src/mcdock.cpp -o mcdock $(LINKER_FLAGS)
 
 main: src/main_ob.cpp
-	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/main_ob.cpp -o main -lopenbabel
+	$(CXX) $(INCLUDE) $(LIBS) $(CXX_FLAGS) src/main_ob.cpp -o main $(LINKER_FLAGS)
 
 conformers: src/conformers.cpp
-	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/conformers.cpp -o conformers -lopenbabel
+	$(CXX) $(INCLUDE) $(LIBS) $(CXX_FLAGS) src/conformers.cpp -o conformers $(LINKER_FLAGS)
 
 
 clean:
