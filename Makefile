@@ -5,7 +5,7 @@ OBDIR = /home/andersx/opt/openbabel2.4
 INCLUDE = -I$(OBDIR)/include/openbabel-2.0/
 LIBS = -L$(OBDIR)/lib
 
-all: mcdock
+all: mcdock main conformers
 
 mcdock: src/mcdock.cpp src/utils.hpp
 	$(CXX) $(INCLUDE) $(LIBS) -std=c++11 -O3 -march=native src/mcdock.cpp -o mcdock -lopenbabel -Wall

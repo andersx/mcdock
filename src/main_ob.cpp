@@ -122,11 +122,11 @@ int main(int argc, char *argv[]) {
     ifs.close();
 
     double ea = minimize_molecule(mol, ff);
-    printf("Molecule A (minimized) E = %10.4f kJ/mol    file = ", ea);
+    printf("Molecule A (minimized) E = %10.4f kcal/mol    file = ", ea / 4.180);
     std::cout << base_file << std::endl;
 
     double eb = minimize_molecule(mol2, ff);
-    printf("Molecule B (minimized) E = %10.4f kJ/mol    file = ", eb);
+    printf("Molecule B (minimized) E = %10.4f kcal/mol    file = ", eb / 4.180);
     std::cout << dock_file << std::endl;
 
     std::remove("out.xyz");
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
             mol_old.SetCoordinates(mol.GetCoordinates());
             energy_old = e;
 
-            printf("Step: %10u  E_bind = %10.4f kJ/mol\n", step, e - (ea + eb));
+            printf("Step: %10u  E_bind = %10.4f kcal/mol\n", step, (e - (ea + eb)) / 4.180);
 
             conv.Write(&mol, &ofs);
 
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
     ofs.close();
     printf("done!\n");
     printf("Wrote out.xyz\n");
-    printf("Final E_bind = %10.4f kJ/mol\n", ec - (ea + eb));
+    printf("Final E_bind = %10.4f kcal/mol\n", (ec - (ea + eb))/4.180);
 
     return 0;
 
