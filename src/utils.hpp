@@ -3,6 +3,83 @@
 
 std::string ff = "MMFF94";
 
+
+double mopac_energy(OpenBabel::OBMol &mol) {
+
+    std::remove("temp.mop");
+    std::remove("temp.out");
+    std::remove("temp.arc");
+
+    OpenBabel::OBConversion conv;
+    conv.SetInAndOutFormats("moo", "mop");
+
+    std::ofstream ofs("temp.mop");
+    conv.Write(&mol, &ofs);
+    ofs.close();
+
+    int success = system("./run_mopac_1scf");
+    if (success > 1) printf("Error running MOPAC!");
+
+    OpenBabel::OBMol molout;
+
+    std::ifstream ifs;
+    ifs.open("temp.out");
+    conv.Read(&molout, &ifs);
+    ifs.close();
+
+    std::remove("temp.mop");
+    std::remove("temp.out");
+    std::remove("temp.arc");
+
+    return  molout.GetEnergy();
+
+}
+                    
+double mopac_optimize(OpenBabel::OBMol &mol) {
+
+    std::remove("temp.mop");
+    std::remove("temp.out");
+    std::remove("temp.arc");
+
+    OpenBabel::OBConversion conv;
+    conv.SetInAndOutFormats("moo", "mop");
+
+    std::ofstream ofs("temp.mop");
+    conv.Write(&mol, &ofs);
+    ofs.close();
+
+    int success = system("./run_mopac_opt");
+    if (success > 1) printf("Error running MOPAC!");
+
+    OpenBabel::OBMol molout;
+
+    std::ifstream ifs;
+    ifs.open("temp.out");
+    conv.Read(&molout, &ifs);
+    ifs.close();
+
+    std::cout << (*(mol.GetCoordinates())) << std::endl;
+    std::cout << molout.NumAtoms() << std::endl;\
+
+    // Segfaults for unknown random reasons??
+    // mol.SetCoordinates(molout.GetCoordinates());
+
+    // Workaround for above problem
+    for (unsigned int i = 1; i < mol.NumAtoms() + 1; i++) {
+        OpenBabel::OBAtom *atom = mol.GetAtom(i);
+        atom->SetVector((molout.GetAtom(i))->GetVector());
+    }
+
+    mol.SetEnergy(molout.GetEnergy());
+
+    std::remove("temp.mop");
+    std::remove("temp.out");
+    std::remove("temp.arc");
+
+    return  molout.GetEnergy();
+
+}
+
 // Returns a rotated vector, rotated by T
 OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 &J, const double T) {
 

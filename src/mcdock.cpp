@@ -82,6 +82,14 @@ int main(int argc, char *argv[]) {
     set_conformations(ligand);
     printf("Found %3i rotatable bonds\n", ligand.NumRotors());
 
+    // double a = mopac_energy(mol);
+    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
+    // a = mopac_optimize(mol);
+    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
+    // a = mopac_energy(mol);
+    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
+
+    // exit(0);
 
     // Make sure output file doesn't already exist.
     std::remove("out.xyz");
