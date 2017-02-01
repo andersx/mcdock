@@ -82,15 +82,6 @@ int main(int argc, char *argv[]) {
     set_conformations(ligand);
     printf("Found %3i rotatable bonds\n", ligand.NumRotors());
 
-    // double a = mopac_energy(mol);
-    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
-    // a = mopac_optimize(mol);
-    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
-    // a = mopac_energy(mol);
-    // printf("Pocket (minimized) E = %10.4f kcal/mol\n", a);
-
-    // exit(0);
-
     // Make sure output file doesn't already exist.
     std::remove("out.xyz");
     std::ofstream ofs("out.xyz");
@@ -229,6 +220,8 @@ int main(int argc, char *argv[]) {
                 e_low = e_bind;
                 std::remove("min.xyz");
                 std::ofstream ofs_min("min.xyz");
+                std::string title = std::to_string(e_bind/4.180);
+                mol_ligand.SetTitle(title);
                 conv2.Write(&mol_ligand, &ofs_min);
                 ofs_min.close();
 
