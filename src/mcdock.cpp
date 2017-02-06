@@ -146,6 +146,8 @@ int main(int argc, char *argv[]) {
             double e = pFF->Energy();
             double energy_old = e;
             double delta_e = 0.0;
+            int accept = 0;
+            double acceptance_ratio;
 
             // Begin MC simulation
             for (int step = 0; step < nsteps; step++) {
@@ -200,16 +202,22 @@ int main(int argc, char *argv[]) {
                     energy_old = e;
                     // printf(" Etot = %10.4f    Ea = %10.4f Eb = %10.4f   E_bind = %10.4f\n", e, ea, eb_min, e - (ea + eb_min));
                 // ... or reject.
+                    accept += 1;
                 } else {
                     mol_ligand.SetCoordinates(mol_old.GetCoordinates());
                     e = energy_old;
                 }
+
+                acceptance_ratio = accept * 100.0 / (step + 1);
+                // printf("\rStep: %6i   acceptance = %6.2f %%   Etotal = %10.4f kcal/mol\n", step + 1, acceptance_ratio, e);
             }
 
             double ec = minimize_molecule(mol_ligand, ff);
             double e_bind = ec - (ea + eb_min);
+            acceptance_ratio = accept * 100.0 / (nsteps + 1);
 
-            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, e_bind);
+            // printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, e_bind);
+            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i    acceptance = %6.2f %%   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, acceptance_ratio, e_bind);
             conv.Write(&mol_ligand, &ofs);
 
             if (e_bind < e_low) {
@@ -231,7 +239,7 @@ int main(int argc, char *argv[]) {
         }
     }
     double time_elapsed = timer.Elapsed();
-    printf("Optimized E_bind = %10.4f kcal/mol    Elapsed time = %4.2f seconds\n", 
+    printf("Optimized E_bind = %10.4f kcal/mol    Elapsed time = %6.2f seconds\n", 
             e_low, time_elapsed);
 
 

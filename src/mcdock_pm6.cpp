@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
             double energy_old = e;
             double delta_e = 0.0;
             int accept = 0;
+            double acceptance_ratio;
 
             // Begin MC simulation
             for (int step = 0; step < nsteps; step++) {
@@ -214,15 +215,16 @@ int main(int argc, char *argv[]) {
                     e = energy_old;
                 }
 
-                double acceptance_ratio = accept * 100.0 / (step + 1);
-                printf("\rStep: %6i   acceptance = %6.2f %%   Etotal = %10.4f kcal/mol", step + 1, acceptance_ratio, e);
+                acceptance_ratio = accept * 100.0 / (step + 1);
+                // printf("Step: %6i   acceptance = %6.2f %%   Etotal = %10.4f kcal/mol\n", step + 1, acceptance_ratio, e);
             }
 
             // double ec = minimize_molecule(mol_ligand, ff);
             double ec = mopac_optimize(mol_ligand);
             double e_bind = ec - (ea + eb_min);
+            acceptance_ratio = accept * 100.0 / (nsteps + 1);
 
-            printf("\nRotamer: %3i / %3i   Trajectory: %3i / %3i   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, ec);
+            printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i    acceptance = %6.2f %%   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, starting_points, acceptance_ratio, e_bind);
             conv.Write(&mol_ligand, &ofs);
 
             if (e_bind < e_low) {

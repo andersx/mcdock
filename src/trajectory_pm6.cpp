@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
        atom->SetVector(temp);
     }
 
-    double ea = minimize_molecule(mol, ff);
+    double ea = mopac_optimize(mol);
     printf("Molecule A (minimized) E = %10.4f kcal/mol    file = ", ea);
     std::cout << base_file << std::endl;
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         atom->SetVector(temp);
 
     }
-    double eb = minimize_molecule(mol2, ff);
+    double eb = mopac_optimize(mol2);
     printf("Molecule B (minimized) E = %10.4f kcal/mol    file = ", eb);
     std::cout << dock_file << std::endl;
 
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
         }
 
         pFF->SetCoordinates(mol);
-        e = pFF->Energy();
+        e = mopac_energy(mol);
 
         delta_e =  e - energy_old;
 
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
     printf("Minimizing final conformation ... ");
     conv.Write(&mol, &ofs);
 
-    double ec = minimize_molecule(mol, ff);
+    double ec = mopac_energy(mol);
     ofs.close();
     printf("done!\n");
     printf("Wrote out.xyz\n");

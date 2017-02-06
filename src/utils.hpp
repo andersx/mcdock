@@ -1,5 +1,6 @@
 #ifndef SRC_UTILS_HPP
 #define SRC_UTILS_HPP
+#define HAVE_EIGEN
 
 std::string ff = "MMFF94";
 

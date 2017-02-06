@@ -29,7 +29,10 @@
 *.app
 
 mcdock
+mcdock_pm6
+trajectory
+trajectory_pm6
 conformers
-main
 out.xyz
 min.xyz
+conformers.xyz
