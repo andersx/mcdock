@@ -3,7 +3,6 @@
 
 std::string ff = "MMFF94";
 
-
 double mopac_energy(OpenBabel::OBMol &mol) {
 
     std::remove("temp.mop");
@@ -58,9 +57,6 @@ double mopac_optimize(OpenBabel::OBMol &mol) {
     conv.Read(&molout, &ifs);
     ifs.close();
 
-    std::cout << (*(mol.GetCoordinates())) << std::endl;
-    std::cout << molout.NumAtoms() << std::endl;\
-
     // Segfaults for unknown random reasons??
     // mol.SetCoordinates(molout.GetCoordinates());
 
@@ -81,7 +77,8 @@ double mopac_optimize(OpenBabel::OBMol &mol) {
 }
 
 // Returns a rotated vector, rotated by T
-OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 &J, const double T) {
+OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, 
+        const OpenBabel::vector3 &J, const double T) {
 
     double x = V.x();
     double y = V.y();
@@ -96,9 +93,12 @@ OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, const OpenBabel::vector3 
     double sint = std::sin(T);
     double cost = std::cos(T);
 
-    double a = (u * (u*x + v*y + w*z) + (x * (v*v + w*w) - u * (v*y + w*z)) * cost + norm * (-w*y + v*z) * sint) * inv_norm_sqrt;
-    double b = (v * (u*x + v*y + w*z) + (y * (u*u + w*w) - v * (u*x + w*z)) * cost + norm * ( w*x - u*z) * sint) * inv_norm_sqrt;
-    double c = (w * (u*x + v*y + w*z) + (z * (u*u + v*v) - w * (u*x + v*y)) * cost + norm * (-v*x + u*y) * sint) * inv_norm_sqrt;
+    double a = (u * (u*x + v*y + w*z) + (x * (v*v + w*w) - u * (v*y + w*z)) 
+            * cost + norm * (-w*y + v*z) * sint) * inv_norm_sqrt;
+    double b = (v * (u*x + v*y + w*z) + (y * (u*u + w*w) - v * (u*x + w*z)) 
+            * cost + norm * ( w*x - u*z) * sint) * inv_norm_sqrt;
+    double c = (w * (u*x + v*y + w*z) + (z * (u*u + v*v) - w * (u*x + v*y)) 
+            * cost + norm * (-v*x + u*y) * sint) * inv_norm_sqrt;
 
     OpenBabel::vector3 rotated;
     rotated.Set(a, b, c);

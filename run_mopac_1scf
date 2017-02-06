@@ -1,4 +1,4 @@
 #!/bin/bash
-sed -i "s/PUT KEYWORDS HERE/PM6-D3H4 1SCF PRECISE/" temp.mop
+sed -i "s/PUT KEYWORDS HERE/PM6-D3H4 1SCF/" temp.mop
 export LD_LIBRARY_PATH=/opt/mopac:$LD_LIBRARY_PATH
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /opt/mopac/MOPAC2016.exe temp.mop 2> /dev/null
