@@ -2,7 +2,7 @@
 #define SRC_UTILS_HPP
 #define HAVE_EIGEN
 
-std::string ff = "MMFF94";
+namespace McDock {
 
 // Returns a rotated vector, rotated by T
 OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, 
@@ -219,7 +219,7 @@ double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
 }
 
-void set_conformations(OpenBabel::OBMol &mol){
+void set_conformations(OpenBabel::OBMol &mol, std::string ff){
 
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
     pFF->Setup(mol);
@@ -273,5 +273,178 @@ void save_xyz(OpenBabel::OBMol mol, std::string filename) {
 
 }
 
+// Prints help
+void print_help() {
+
+        printf("Usage: ./mcdock --target file1.xyz --ligand file2.xyz [--args]\n\n");
+
+        printf("Optional arguments:\n");
+
+        printf("--energy [string]       Potential energy function \"MMFF94\" (default),\n");
+        printf("                        \"UFF\", \"PM6-D3H+\" (requires MOPAC). \n");
+        printf("--temperature [float]   Temperature in units of [R T] (default = 1.0).\n");
+        printf("--trajectories [int]    Number of independent trajectories (default = 10).\n");
+        printf("--steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).\n");
+        printf("--no-rotor-search       Disable rotor search.  (default = perform rotor search).\n");
+
+        printf("\n");
+}
+
+
+// Container for command-line options
+struct Option {
+
+    std::string ff = "MMFF94";
+    std::string target;
+    std::string ligand;
+    bool use_mopac = false;
+    unsigned int trajectories = 1;
+    int steps = 1000;
+    double temperature = 1.0;
+    double verbose_flag = false;
+    double rotor_flag = false;
+    double help_flag= false;
+
+};
+
+// Option parser
+Option get_options (int argc, char **argv) {
+
+    if (argc < 2) {
+        print_help();
+        exit(0);
+    }
+
+    int c;
+
+    Option opts;
+
+    int verbose_flag = 0;
+    int rotor_flag = 0;
+    int help_flag = 0;
+
+    while (1) {
+        static struct option long_options[] = {
+            {"verbose",           no_argument,    &verbose_flag,   1},
+            {"help",              no_argument,    &help_flag,      1},
+            {"no-rotor-search",   no_argument,    &rotor_flag,     1},
+            {"target",        required_argument, 0, 'a'},
+            {"ligand",        required_argument, 0, 'b'},
+            {"trajectories",  required_argument, 0, 'c'},
+            {"energy",        required_argument, 0, 'd'},
+            {"temperature",   required_argument, 0, 'e'},
+            {"mc-steps",      required_argument, 0, 'f'},
+            {0, 0, 0, 0}
+        };
+
+        int option_index = 0;
+
+        c = getopt_long (argc, argv, "a:b:c:d:f:", long_options, &option_index);
+
+        if (c == -1)
+            break;
+
+        switch (c) {
+
+            case 0:
+                if (long_options[option_index].flag != 0) break;
+            break;
+
+            case 'a':
+              opts.target = optarg;
+              break;
+
+            case 'b':
+              opts.ligand = optarg;
+              break;
+
+            case 'e':
+              opts.temperature = std::stod(optarg);
+              break;
+
+            case 'c':
+              opts.trajectories = atoi(optarg);
+              break;
+
+            case 'f':
+              opts.steps = atoi(optarg);
+              break;
+
+            case 'd': {
+                std::string ff = optarg;
+
+                if (ff.compare("MMFF94") == 0) {
+                    opts.ff = optarg;
+                    opts.use_mopac = false;
+                } else if (ff.compare("MMFF94s") == 0) {
+                    opts.ff = optarg;
+                    opts.use_mopac = false;
+                } else if (ff.compare("GAFF") == 0) {
+                    opts.ff = optarg;
+                    opts.use_mopac = false;
+                } else if (ff.compare("UFF") == 0) {
+                    opts.ff = optarg;
+                    opts.use_mopac = false;
+                } else if (ff.compare("PM6-D3H4") == 0) {
+                    opts.ff = optarg;
+                    opts.use_mopac = true;
+
+                }  else {
+                    printf ("ERROR: Unsupported force field `%s'\n", optarg);
+                    exit(0);
+                }
+                break;
+            }
+            case '?':
+              /* getopt_long already printed an error message. */
+              break;
+
+            default:
+              abort ();
+            }
+    }
+
+  if (verbose_flag) opts.verbose_flag = true;
+  if (rotor_flag) opts.rotor_flag = true;
+  if (help_flag) {
+        print_help();
+        exit(0);
+    }
+
+  /* Print any remaining command line arguments (not options). */
+  if (optind < argc)
+    {
+      printf ("non-option ARGV-elements: ");
+      while (optind < argc)
+        printf ("%s ", argv[optind++]);
+      putchar ('\n');
+    }
+
+  if (opts.temperature < 0) { 
+      std::cout << "ERROR: Positive temperature required" << std::endl;
+      exit(0);
+  }
+
+    if (opts.ligand.compare("") == 0) {
+        printf("ERROR: No ligand xyz-file specified.\n");
+
+        print_help();
+        exit(0);
+    }
+
+    if (opts.target.compare("") == 0) {
+        printf("ERROR: No target xyz-file specified.\n");
+
+        print_help();
+        exit(0);
+    }
+
+    return opts;
+
+}
+
+
+
+} // Namespace McDock
 
 #endif
