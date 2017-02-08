@@ -281,7 +281,7 @@ void print_help() {
         printf("Optional arguments:\n");
 
         printf("--energy [string]       Potential energy function \"MMFF94\" (default),\n");
-        printf("                        \"UFF\", \"PM6-D3H+\" (requires MOPAC). \n");
+        printf("                        \"UFF\", \"PM6-D3H4\" (requires MOPAC). \n");
         printf("--temperature [float]   Temperature in units of [R T] (default = 1.0).\n");
         printf("--trajectories [int]    Number of independent trajectories (default = 10).\n");
         printf("--steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).\n");
