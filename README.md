@@ -1,4 +1,4 @@
-# mcdock
+# McDock
 McDock: Simple Monte Carlo docking algorithm in C++
 
 ## How to install:
@@ -45,14 +45,14 @@ The possible program options are:
     
     Optional arguments:
     --energy [string]       Potential energy function "MMFF94" (default),
-                            "UFF", "PM6-D3H+" (requires MOPAC). 
+                            "UFF", "PM6-D3H4" (requires MOPAC). 
     --temperature [float]   Temperature in units of [R T] (default = 1.0).
     --trajectories [int]    Number of independent trajectories (default = 10).
     --steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).
     --no-rotor-search       Disable rotor search.  (default = perform rotor search).
 
 The possible potential energy functions are the `MMFF` and `UFF` force fields as implemented in Open Babel.
-If MOPAC is installed in `/opt/mopac/` it is possible to use the semi-empirical method `PM6-D3H+` as well.
+If MOPAC is installed in `/opt/mopac/` it is possible to use the semi-empirical method `PM6-D3H4` as well.
 
 ## Running McDock:
 
@@ -110,4 +110,4 @@ A "good" temperature will usually yield an acceptance rate around 20 %.
 
 ## License:
 
-McDock is licensed under the MIT open source license.
+McDock is licensed under the MIT open source license. Cite the use of McDock by citing this github repository.
