@@ -221,6 +221,7 @@ double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
 void set_conformations(OpenBabel::OBMol &mol, std::string ff){
 
+    // if (ff.compare("PM6-D3H4") == 0) ff = "MMFF94";
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
     pFF->Setup(mol);
 
@@ -386,7 +387,7 @@ Option get_options (int argc, char **argv) {
                     opts.ff = optarg;
                     opts.use_mopac = false;
                 } else if (ff.compare("PM6-D3H4") == 0) {
-                    opts.ff = optarg;
+                    opts.ff = "MMFF94";
                     opts.use_mopac = true;
 
                 }  else {
