@@ -4,6 +4,104 @@
 
 std::string ff = "MMFF94";
 
+// Returns a rotated vector, rotated by T
+OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, 
+        const OpenBabel::vector3 &J, const double T) {
+
+    double x = V.x();
+    double y = V.y();
+    double z = V.z();
+
+    double u = J.x();
+    double v = J.y();
+    double w = J.z();
+
+    double norm = std::sqrt(u*u + v*v + w*w);
+    double inv_norm_sqrt = 1.0 / (norm * norm);
+    double sint = std::sin(T);
+    double cost = std::cos(T);
+
+    double a = (u * (u*x + v*y + w*z) + (x * (v*v + w*w) - u * (v*y + w*z)) 
+            * cost + norm * (-w*y + v*z) * sint) * inv_norm_sqrt;
+    double b = (v * (u*x + v*y + w*z) + (y * (u*u + w*w) - v * (u*x + w*z)) 
+            * cost + norm * ( w*x - u*z) * sint) * inv_norm_sqrt;
+    double c = (w * (u*x + v*y + w*z) + (z * (u*u + v*v) - w * (u*x + v*y)) 
+            * cost + norm * (-v*x + u*y) * sint) * inv_norm_sqrt;
+
+    OpenBabel::vector3 rotated;
+    rotated.Set(a, b, c);
+
+    return rotated;
+}
+
+void move_molecule(OpenBabel::OBMol &mol, OpenBabel::vector3 move,
+        int startid = 1, int endid = -1) {
+
+    if (endid == -1) endid = mol.NumAtoms() + 1;
+
+    OpenBabel::vector3 temp;
+    OpenBabel::OBAtom *atom;
+
+    for (int i = startid; i < endid; i++) {
+       atom = mol.GetAtom(i);
+       temp = atom->GetVector();
+       temp += move;
+       atom->SetVector(temp);
+    }
+
+}
+
+void rotate_molecule(OpenBabel::OBMol &mol, OpenBabel::vector3 direction, 
+        double theta, int startid = 1, int endid = -1) {
+
+    if (endid == -1) endid = mol.NumAtoms() + 1;
+    
+    OpenBabel::vector3 com;
+    com.Set(0.0, 0.0, 0.0);
+    OpenBabel::OBAtom *atom;
+
+    for (int i = startid; i < endid; i++) {
+
+        atom = mol.GetAtom(i);
+        com += atom->GetVector();
+    }
+    
+    com /= (double)(endid - startid);
+
+
+    OpenBabel::vector3 temp;
+    // Center ligand, and give random rotation
+    for (int i = startid; i < endid; i++) {
+
+        atom = mol.GetAtom(i);
+        temp = atom->GetVector();
+        temp -= com;
+        temp = rotate(temp, direction, theta);
+        temp += com;
+        atom->SetVector(temp);
+
+    }
+
+
+}
+
+
+OpenBabel::OBMol readfile(std::string filename) {
+
+    OpenBabel::OBMol mol;
+
+    OpenBabel::OBConversion conv;
+    conv.SetInAndOutFormats("xyz", "xyz");
+    std::ifstream ifs;
+
+    ifs.open(filename.c_str());
+    conv.Read(&mol, &ifs);
+    ifs.close();
+
+    return mol;
+
+}
+
 double mopac_energy(OpenBabel::OBMol &mol) {
 
     std::remove("temp.mop");
@@ -16,8 +114,11 @@ double mopac_energy(OpenBabel::OBMol &mol) {
     std::ofstream ofs("temp.mop");
     conv.Write(&mol, &ofs);
     ofs.close();
-
-    int success = system("./run_mopac_1scf");
+    
+    // int success = system("./run_mopac_1scf");
+    int success = 0;
+    success += system("sed -i \"s/PUT KEYWORDS HERE/PM6-D3H4 1SCF/\" temp.mop");
+    success += system("LD_LIBRARY_PATH=/opt/mopac:$LD_LIBRARY_PATH OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /opt/mopac/MOPAC2016.exe temp.mop 2> /dev/null ");
     if (success > 1) printf("Error running MOPAC!");
 
     OpenBabel::OBMol molout;
@@ -48,7 +149,9 @@ double mopac_optimize(OpenBabel::OBMol &mol) {
     conv.Write(&mol, &ofs);
     ofs.close();
 
-    int success = system("./run_mopac_opt");
+    int success = 0;
+    success += system("sed -i \"s/PUT KEYWORDS HERE/PM6-D3H4 EF/\" temp.mop");
+    success += system("LD_LIBRARY_PATH=/opt/mopac:$LD_LIBRARY_PATH OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /opt/mopac/MOPAC2016.exe temp.mop 2> /dev/null ");
     if (success > 1) printf("Error running MOPAC!");
 
     OpenBabel::OBMol molout;
@@ -77,35 +180,6 @@ double mopac_optimize(OpenBabel::OBMol &mol) {
 
 }
 
-// Returns a rotated vector, rotated by T
-OpenBabel::vector3 rotate(const OpenBabel::vector3 &V, 
-        const OpenBabel::vector3 &J, const double T) {
-
-    double x = V.x();
-    double y = V.y();
-    double z = V.z();
-
-    double u = J.x();
-    double v = J.y();
-    double w = J.z();
-
-    double norm = std::sqrt(u*u + v*v + w*w);
-    double inv_norm_sqrt = 1.0 / (norm * norm);
-    double sint = std::sin(T);
-    double cost = std::cos(T);
-
-    double a = (u * (u*x + v*y + w*z) + (x * (v*v + w*w) - u * (v*y + w*z)) 
-            * cost + norm * (-w*y + v*z) * sint) * inv_norm_sqrt;
-    double b = (v * (u*x + v*y + w*z) + (y * (u*u + w*w) - v * (u*x + w*z)) 
-            * cost + norm * ( w*x - u*z) * sint) * inv_norm_sqrt;
-    double c = (w * (u*x + v*y + w*z) + (z * (u*u + v*v) - w * (u*x + v*y)) 
-            * cost + norm * (-v*x + u*y) * sint) * inv_norm_sqrt;
-
-    OpenBabel::vector3 rotated;
-    rotated.Set(a, b, c);
-
-    return rotated;
-}
 double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
     OpenBabel::OBForceField* pFF = OpenBabel::OBForceField::FindForceField(ff);
@@ -181,5 +255,23 @@ OpenBabel::vector3 get_com(OpenBabel::OBMol mol) {
     return com;
 
 }
+
+
+void save_xyz(OpenBabel::OBMol mol, std::string filename) {
+
+    OpenBabel::OBConversion conv;
+    conv.SetInAndOutFormats("xyz", "xyz");
+
+    std::ofstream ofs(filename);
+    
+    //std::string title = std::to_string(e_bind);
+    //mol_ligand.SetTitle(title);
+    
+    conv.Write(&mol, &ofs);
+    ofs.close();
+
+
+}
+
 
 #endif
