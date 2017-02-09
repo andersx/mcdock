@@ -48,7 +48,7 @@ The possible program options are:
                             "UFF", "PM6-D3H4" (requires MOPAC). 
     --temperature [float]   Temperature in units of [R T] (default = 1.0).
     --trajectories [int]    Number of independent trajectories (default = 10).
-    --steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).
+    --mc-steps [int]        Number of Monte Carlo steps in each trajectories (default = 1000).
     --no-rotor-search       Disable rotor search.  (default = perform rotor search).
 
 The possible potential energy functions are the `MMFF` and `UFF` force fields as implemented in Open Babel.

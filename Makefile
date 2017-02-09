@@ -15,5 +15,11 @@ mcdock: src/mcdock.cpp src/utils.hpp
 
 clean:
 	rm -f mcdock
+	rm -f temp.mop
+	rm -f temp.out
+	rm -f temp.arc
+	rm -f min.xyz
+	rm -f out.xyz
+	rm -f conformers.xyz
 
 

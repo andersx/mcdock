@@ -285,7 +285,7 @@ void print_help() {
         printf("                        \"UFF\", \"PM6-D3H4\" (requires MOPAC). \n");
         printf("--temperature [float]   Temperature in units of [R T] (default = 1.0).\n");
         printf("--trajectories [int]    Number of independent trajectories (default = 10).\n");
-        printf("--steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).\n");
+        printf("--mc-steps [int]           Number of Monte Carlo steps in each trajectories (default = 1000).\n");
         printf("--no-rotor-search       Disable rotor search.  (default = perform rotor search).\n");
 
         printf("\n");
