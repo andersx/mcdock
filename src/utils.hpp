@@ -213,6 +213,7 @@ double minimize_molecule(OpenBabel::OBMol &mol, const std::string &ff) {
 
     }
     e = pFF->Energy();
+    mol.SetEnergy(e);
 
     // printf("E_after = %10.4f kJ/mol %i\n", e, mol.NumAtoms());
     return e;

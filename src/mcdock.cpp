@@ -251,6 +251,10 @@ int main(int argc, char *argv[]) {
 
             // printf("Rotamer: %3i / %3i   Trajectory: %3i / %3i    acceptance = %6.2f %%   E_bind = %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, opts.trajectories, acceptance_ratio, e_bind);
             printf(" %3i / %3i          %3i / %3i           %6.2f %%        %10.4f kcal/mol", c + 1, ligand.NumConformers(), n + 1, opts.trajectories, acceptance_ratio, e_bind);
+
+            std::string title = "Binding Energy: " + std::to_string(e_bind);
+            mol_ligand.SetTitle(title);
+            mol_ligand.SetEnergy(ec);
             conv.Write(&mol_ligand, &ofs);
 
             // Check if we found the lowest energy
@@ -262,7 +266,7 @@ int main(int argc, char *argv[]) {
                 e_low = e_bind;
                 std::remove("min.xyz");
                 std::ofstream ofs_min("min.xyz");
-                std::string title = std::to_string(e_bind);
+                std::string title = "Binding Energy: " + std::to_string(e_bind);
                 mol_ligand.SetTitle(title);
                 conv2.Write(&mol_ligand, &ofs_min);
                 ofs_min.close();
